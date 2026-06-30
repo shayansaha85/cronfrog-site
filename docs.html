@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CronFrog — Technical Documentation</title>
+    <meta name="description" content="Complete technical documentation for CronFrog: architecture, API reference, database schema, WebSocket protocol, and frontend deep dive.">
+    <link rel="icon" type="image/png" href="assets/cronfrog_logo.png">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- ===================== NAVBAR ===================== -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="index.html" class="navbar-brand">
+                <img src="assets/cronfrog_logo.png" alt="CronFrog Logo">
+                <span>CronFrog</span>
+            </a>
+            <div class="navbar-links" id="nav-menu">
+                <a href="index.html#features">Features</a>
+                <a href="index.html#download">Get Started</a>
+                <a href="docs.html" class="active">Docs</a>
+                <a href="https://github.com/shayansaha85/cronfrog" target="_blank" rel="noopener" class="nav-github">
+                    <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                    GitHub
+                </a>
+            </div>
+            <button class="navbar-toggle" id="nav-toggle" aria-label="Toggle navigation">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ===================== DOCS LAYOUT ===================== -->
+    <div class="docs-wrapper">
+
+        <!-- Sidebar -->
+        <aside class="docs-sidebar">
+            <div class="docs-sidebar-inner">
+                <h4>On This Page</h4>
+                <ul>
+                    <li><a href="#overview" class="active">Overview</a></li>
+                    <li><a href="#architecture">Architecture</a></li>
+                    <li><a href="#project-structure">Project Structure</a></li>
+                    <li><a href="#backend">Backend Deep Dive</a></li>
+                    <li><a href="#database">Database Schema</a></li>
+                    <li><a href="#api">API Reference</a></li>
+                    <li><a href="#websocket">WebSocket Protocol</a></li>
+                    <li><a href="#frontend">Frontend Deep Dive</a></li>
+                    <li><a href="#execution-flow">Execution Flow</a></li>
+                    <li><a href="#configuration">Configuration</a></li>
+                    <li><a href="#dependencies">Dependencies</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="docs-main">
+            <div class="docs-content">
+
+                <!-- Hero -->
+                <div class="docs-hero">
+                    <img src="assets/cronfrog_logo.png" alt="CronFrog Logo">
+                    <h1>Technical Documentation</h1>
+                    <p>A complete guide to CronFrog's architecture, codebase, and API surface.</p>
+                </div>
+
+                <!-- 1. Overview -->
+                <section id="overview">
+                    <h2>1. Overview</h2>
+                    <p>CronFrog is a <strong>self-contained job scheduling platform</strong> combining a Python backend (FastAPI + APScheduler) with a modern single-page web interface. It allows users to:</p>
+                    <ul>
+                        <li><strong>Create scheduled jobs</strong> using standard 5-field cron expressions</li>
+                        <li><strong>Execute shell commands</strong> or scripts on the host machine</li>
+                        <li><strong>Monitor runs in real-time</strong> via WebSocket-powered live log streaming</li>
+                        <li><strong>Manage everything</strong> through a REST API or the built-in web dashboard</li>
+                    </ul>
+                    <p>The entire application runs as a single process — no external message brokers, no Redis, no Celery. Just Python, SQLite, and a browser.</p>
+
+                    <h3>Key Design Decisions</h3>
+                    <table>
+                        <tr><th>Decision</th><th>Rationale</th></tr>
+                        <tr><td><strong>SQLite</strong></td><td>Zero-configuration, serverless, perfect for single-node deployments</td></tr>
+                        <tr><td><strong>APScheduler (AsyncIO)</strong></td><td>In-process scheduler sharing the same event loop as FastAPI</td></tr>
+                        <tr><td><strong>WebSockets</strong></td><td>Eliminates polling; real-time stdout/stderr streaming</td></tr>
+                        <tr><td><strong>Static SPA</strong></td><td>Vanilla JS frontend — no npm, no bundler, no build step</td></tr>
+                        <tr><td><strong>asyncio subprocess</strong></td><td>Non-blocking execution within the async event loop</td></tr>
+                    </table>
+                </section>
+
+                <!-- 2. Architecture -->
+                <section id="architecture">
+                    <h2>2. Architecture</h2>
+                    <p>CronFrog follows a <strong>monolithic, single-process architecture</strong>. The HTTP server, background scheduler, and job executor all run within the same Python process and share a common <code>asyncio</code> event loop.</p>
+                    <img src="assets/architecture_overview.png" alt="CronFrog Architecture Overview">
+
+                    <h3>How the Three Engines Cooperate</h3>
+                    <table>
+                        <tr><th>Engine</th><th>Role</th><th>Lifecycle</th></tr>
+                        <tr>
+                            <td><strong>FastAPI</strong></td>
+                            <td>HTTP server + WebSocket host</td>
+                            <td>Starts with <code>uvicorn.run()</code>, serves API and static files</td>
+                        </tr>
+                        <tr>
+                            <td><strong>APScheduler</strong></td>
+                            <td>Background cron engine</td>
+                            <td>Started in <code>lifespan()</code> context, polls cron triggers on the event loop</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Executor</strong></td>
+                            <td>Subprocess manager</td>
+                            <td>Invoked by APScheduler or the API; spawns <code>asyncio</code> subprocesses</td>
+                        </tr>
+                    </table>
+                    <p>All three share the <strong>same event loop</strong>, so the scheduler can call <code>execute_job()</code> without thread synchronization, the executor can broadcast logs to WebSocket clients directly, and the API can fire-and-forget a job via <code>asyncio.create_task()</code>.</p>
+                </section>
+
+                <!-- 3. Project Structure -->
+                <section id="project-structure">
+                    <h2>3. Project Structure</h2>
+                    <img src="assets/project_structure.png" alt="CronFrog Project Structure">
+                    <pre><code>cronfrog/
+├── run.py                      # Application entry point
+├── requirements.txt            # Python dependencies
+├── LICENSE                     # MIT License
+├── server/                     # Backend Python package
+│   ├── __init__.py
+│   ├── main.py                 # FastAPI app, lifespan, WebSocket, static mount
+│   ├── api.py                  # REST API route definitions
+│   ├── database.py             # SQLite data access layer
+│   ├── scheduler.py            # APScheduler configuration
+│   └── executor.py             # Async subprocess execution + log broadcasting
+├── public/                     # Frontend static SPA
+│   ├── index.html              # Single-page HTML
+│   ├── css/style.css           # Styling
+│   ├── js/                     # api.js, app.js, components.js, cron-builder.js, websocket.js
+│   └── static/                 # Logo assets
+├── data/cronfrog.db            # SQLite database (dev copy)
+└── docs/                       # Documentation assets</code></pre>
+                </section>
+
+                <!-- 4. Backend Deep Dive -->
+                <section id="backend">
+                    <h2>4. Backend Deep Dive</h2>
+
+                    <h3>4.1 Entry Point — <code>run.py</code></h3>
+                    <p>The entry point is deliberately minimal. It ensures the project root is on <code>sys.path</code>, imports the FastAPI <code>app</code> instance from <code>server.main</code>, and starts the Uvicorn ASGI server. Port is configurable via the <code>PORT</code> environment variable (default: <code>8000</code>).</p>
+
+                    <h3>4.2 Application Bootstrap — <code>server/main.py</code></h3>
+                    <p>Uses FastAPI's <code>lifespan</code> async context manager to:</p>
+                    <ul>
+                        <li><strong>Initialize the database</strong> — creates tables if they don't exist</li>
+                        <li><strong>Start APScheduler</strong> — begins the background event loop</li>
+                        <li><strong>Load saved jobs</strong> — re-registers all enabled jobs from the database</li>
+                        <li><strong>Mount static files</strong> — serves the <code>public/</code> directory at <code>/</code></li>
+                    </ul>
+                    <p>CORS middleware is configured to allow all origins. The WebSocket endpoint at <code>/api/ws/runs/{run_id}</code> handles live log connections with a late-join buffer replay.</p>
+
+                    <h3>4.3 REST API — <code>server/api.py</code></h3>
+                    <p>All routes are prefixed with <code>/api</code> and handle CRUD operations for jobs, manual triggers, run history, and stats. When a job is created or updated with <code>enabled=True</code>, it's automatically registered with APScheduler. Manual runs use <code>asyncio.create_task()</code> for fire-and-forget execution.</p>
+
+                    <h3>4.4 Database Layer — <code>server/database.py</code></h3>
+                    <p>A thin Data Access Layer (DAL) over SQLite using Python's built-in <code>sqlite3</code> module. Each function opens a connection, performs the operation, and closes it. The database defaults to <code>~/.cronfrog/data/cronfrog.db</code> to prevent Uvicorn <code>--reload</code> restart loops.</p>
+
+                    <h3>4.5 Scheduler — <code>server/scheduler.py</code></h3>
+                    <p>Wraps APScheduler's <code>AsyncIOScheduler</code>. Converts standard 5-field cron expressions into trigger objects using <code>CronTrigger.from_crontab()</code>. On startup, all enabled jobs are re-registered (<code>load_jobs_into_scheduler()</code>).</p>
+
+                    <h3>4.6 Executor — <code>server/executor.py</code></h3>
+                    <p>The most complex module. Manages the full lifecycle of job execution:</p>
+                    <ul>
+                        <li>Creates a run record in the database</li>
+                        <li>Merges environment variables and resolves the shell executable</li>
+                        <li>Spawns an async subprocess via <code>asyncio.create_subprocess_shell()</code></li>
+                        <li>Reads stdout/stderr concurrently with <code>asyncio.gather()</code></li>
+                        <li>Broadcasts each line to connected WebSocket clients in real-time</li>
+                        <li>Finalizes the run record with exit code, output, and status</li>
+                    </ul>
+                    <p>Maintains three in-memory registries: <code>active_processes</code> (for kill support), <code>active_logs</code> (buffer for late-joining clients), and <code>run_websockets</code> (connected viewers).</p>
+                </section>
+
+                <!-- 5. Database Schema -->
+                <section id="database">
+                    <h2>5. Database Schema</h2>
+                    <img src="assets/database_schema.png" alt="CronFrog Database Schema">
+
+                    <h3><code>jobs</code> Table</h3>
+                    <table>
+                        <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+                        <tr><td><code>id</code></td><td>INTEGER PK</td><td>Unique job identifier (auto-increment)</td></tr>
+                        <tr><td><code>name</code></td><td>TEXT NOT NULL</td><td>Human-readable job name</td></tr>
+                        <tr><td><code>command</code></td><td>TEXT NOT NULL</td><td>Shell command to execute</td></tr>
+                        <tr><td><code>cron_expression</code></td><td>TEXT</td><td>Standard 5-field cron expression</td></tr>
+                        <tr><td><code>timezone</code></td><td>TEXT</td><td>Timezone for cron evaluation (default: UTC)</td></tr>
+                        <tr><td><code>enabled</code></td><td>BOOLEAN</td><td>Whether the job is active in the scheduler</td></tr>
+                        <tr><td><code>working_directory</code></td><td>TEXT</td><td>Working directory for the subprocess</td></tr>
+                        <tr><td><code>shell</code></td><td>TEXT</td><td>Shell executable (e.g., /bin/bash)</td></tr>
+                        <tr><td><code>env_vars</code></td><td>TEXT</td><td>JSON string of environment variables</td></tr>
+                        <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>Record creation time</td></tr>
+                        <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>Last modification time</td></tr>
+                        <tr><td><code>last_run_at</code></td><td>TIMESTAMP</td><td>Most recent execution timestamp</td></tr>
+                        <tr><td><code>last_status</code></td><td>TEXT</td><td>Most recent execution status</td></tr>
+                    </table>
+
+                    <h3><code>job_runs</code> Table</h3>
+                    <table>
+                        <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+                        <tr><td><code>id</code></td><td>INTEGER PK</td><td>Unique run identifier (auto-increment)</td></tr>
+                        <tr><td><code>job_id</code></td><td>INTEGER FK</td><td>Parent job reference → jobs(id)</td></tr>
+                        <tr><td><code>started_at</code></td><td>TIMESTAMP</td><td>Execution start time</td></tr>
+                        <tr><td><code>finished_at</code></td><td>TIMESTAMP</td><td>Execution end time</td></tr>
+                        <tr><td><code>exit_code</code></td><td>INTEGER</td><td>Process exit code (0 = success)</td></tr>
+                        <tr><td><code>stdout</code></td><td>TEXT</td><td>Captured standard output</td></tr>
+                        <tr><td><code>stderr</code></td><td>TEXT</td><td>Captured standard error</td></tr>
+                        <tr><td><code>status</code></td><td>TEXT</td><td>running, success, or failed</td></tr>
+                    </table>
+                    <p><strong>Relationship:</strong> Each job can have many run records (1:N). Runs are ordered by <code>id DESC</code> and limited to 50 per query.</p>
+                </section>
+
+                <!-- 6. API Reference -->
+                <section id="api">
+                    <h2>6. API Reference</h2>
+                    <p>All endpoints are prefixed with <code>/api</code>. The auto-generated Swagger UI is available at <code>/docs</code> when the server is running.</p>
+
+                    <h3>Jobs CRUD</h3>
+                    <table>
+                        <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+                        <tr><td><code>GET</code></td><td><code>/api/jobs</code></td><td>List all jobs with next run times</td></tr>
+                        <tr><td><code>POST</code></td><td><code>/api/jobs</code></td><td>Create a new job</td></tr>
+                        <tr><td><code>GET</code></td><td><code>/api/jobs/{id}</code></td><td>Get a single job by ID</td></tr>
+                        <tr><td><code>PUT</code></td><td><code>/api/jobs/{id}</code></td><td>Update a job's configuration</td></tr>
+                        <tr><td><code>DELETE</code></td><td><code>/api/jobs/{id}</code></td><td>Delete a job</td></tr>
+                    </table>
+
+                    <h3>Job Control</h3>
+                    <table>
+                        <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+                        <tr><td><code>POST</code></td><td><code>/api/jobs/{id}/start</code></td><td>Enable and schedule a job</td></tr>
+                        <tr><td><code>POST</code></td><td><code>/api/jobs/{id}/stop</code></td><td>Disable and unschedule a job</td></tr>
+                        <tr><td><code>POST</code></td><td><code>/api/jobs/{id}/run</code></td><td>Trigger immediate execution</td></tr>
+                        <tr><td><code>POST</code></td><td><code>/api/jobs/{id}/runs/{rid}/kill</code></td><td>Terminate a running process</td></tr>
+                    </table>
+
+                    <h3>Runs &amp; Stats</h3>
+                    <table>
+                        <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+                        <tr><td><code>GET</code></td><td><code>/api/jobs/{id}/runs</code></td><td>List last 50 runs for a job</td></tr>
+                        <tr><td><code>GET</code></td><td><code>/api/jobs/{id}/runs/{rid}</code></td><td>Get details of a specific run</td></tr>
+                        <tr><td><code>GET</code></td><td><code>/api/stats</code></td><td>Dashboard statistics (total, active, failed)</td></tr>
+                    </table>
+
+                    <h3>Example Response — <code>GET /api/stats</code></h3>
+                    <pre><code>{
+    "total_jobs": 5,
+    "active_jobs": 3,
+    "failed_runs": 1
+}</code></pre>
+                </section>
+
+                <!-- 7. WebSocket Protocol -->
+                <section id="websocket">
+                    <h2>7. WebSocket Protocol</h2>
+                    <p><strong>Endpoint:</strong> <code>ws://localhost:8000/api/ws/runs/{run_id}</code></p>
+                    <p>All messages are JSON-encoded strings pushed from the server to the client.</p>
+
+                    <h3>Message Types</h3>
+                    <table>
+                        <tr><th>Type</th><th>Description</th><th>Example</th></tr>
+                        <tr><td><code>stdout</code></td><td>A line of standard output</td><td><code>{"type":"stdout","data":"Backup complete\n"}</code></td></tr>
+                        <tr><td><code>stderr</code></td><td>A line of standard error</td><td><code>{"type":"stderr","data":"Warning: low disk\n"}</code></td></tr>
+                        <tr><td><code>close</code></td><td>Server closing the stream</td><td><code>{"type":"close"}</code></td></tr>
+                    </table>
+
+                    <h3>Late-Join Buffer</h3>
+                    <p>If a client connects <strong>after</strong> a job has started, the server replays all buffered log lines from <code>active_logs[run_id]</code> before streaming new lines. This ensures no output is ever missed.</p>
+                </section>
+
+                <!-- 8. Frontend Deep Dive -->
+                <section id="frontend">
+                    <h2>8. Frontend Deep Dive</h2>
+                    <p>The frontend is a <strong>vanilla JavaScript SPA</strong> with no build step, no framework, and no npm dependencies. It's served directly as static files by FastAPI.</p>
+
+                    <h3>Module Breakdown</h3>
+                    <table>
+                        <tr><th>File</th><th>Purpose</th></tr>
+                        <tr><td><code>api.js</code></td><td>Fetch-based HTTP client wrapping all <code>/api/*</code> calls</td></tr>
+                        <tr><td><code>app.js</code></td><td>Central controller with hash-based router (<code>window.location.hash</code>)</td></tr>
+                        <tr><td><code>components.js</code></td><td>Stateless HTML template renderers for stats cards, table rows, badges</td></tr>
+                        <tr><td><code>cron-builder.js</code></td><td>Interactive cron expression builder with preset tabs</td></tr>
+                        <tr><td><code>websocket.js</code></td><td><code>LogStreamer</code> class for WebSocket connections and auto-scrolling terminal</td></tr>
+                    </table>
+
+                    <h3>Route Map</h3>
+                    <table>
+                        <tr><th>Hash</th><th>View</th><th>Data Loader</th></tr>
+                        <tr><td><code>#dashboard</code></td><td>Dashboard</td><td>Fetches stats + active jobs</td></tr>
+                        <tr><td><code>#jobs</code></td><td>Jobs list</td><td>Fetches all jobs, applies search filter</td></tr>
+                        <tr><td><code>#job-edit/{id}</code></td><td>Edit form</td><td>Populates form from API or resets for new</td></tr>
+                        <tr><td><code>#job-detail/{id}</code></td><td>Detail + terminal</td><td>Loads runs, connects WebSocket</td></tr>
+                    </table>
+
+                    <h3>Design System</h3>
+                    <p>The CSS implements a <strong>dark-mode glassmorphism</strong> theme using CSS custom properties. Key tokens include emerald green (<code>#10b981</code>) as the primary accent, Inter as the sans-serif font, Fira Code for monospace, and translucent <code>backdrop-filter: blur()</code> panels.</p>
+                </section>
+
+                <!-- 9. Execution Flow -->
+                <section id="execution-flow">
+                    <h2>9. Job Execution Flow</h2>
+                    <img src="assets/request_flow.png" alt="CronFrog Job Execution Flow">
+                    <h3>Step-by-Step</h3>
+                    <ul>
+                        <li><strong>Trigger:</strong> Manual (POST /api/jobs/{id}/run) or scheduled (APScheduler cron trigger)</li>
+                        <li><strong>Prepare:</strong> Fetch job config, create run record, init log buffer, merge env vars, resolve shell</li>
+                        <li><strong>Execute:</strong> Spawn subprocess, register in active_processes, launch concurrent stream readers</li>
+                        <li><strong>Stream:</strong> Each line appended to buffer and pushed via WebSocket to all connected clients</li>
+                        <li><strong>Complete:</strong> Capture exit code, determine status, write final output to DB, clean up registries, close WebSockets</li>
+                    </ul>
+                </section>
+
+                <!-- 10. Configuration -->
+                <section id="configuration">
+                    <h2>10. Configuration &amp; Environment</h2>
+                    <p>CronFrog is configured entirely through environment variables. No config files needed.</p>
+                    <table>
+                        <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                        <tr><td><code>PORT</code></td><td><code>8000</code></td><td>TCP port for the HTTP/WebSocket server</td></tr>
+                        <tr><td><code>CRONFROG_DB_PATH</code></td><td><code>~/.cronfrog/data/cronfrog.db</code></td><td>Absolute path to the SQLite database file</td></tr>
+                    </table>
+                    <h3>Examples</h3>
+                    <pre><code># Windows (PowerShell)
+$env:PORT = 8080
+$env:CRONFROG_DB_PATH = "C:\data\cronfrog.db"
+python run.py
+
+# Linux / macOS
+PORT=8080 CRONFROG_DB_PATH="/data/cronfrog.db" python run.py</code></pre>
+                </section>
+
+                <!-- 11. Dependencies -->
+                <section id="dependencies">
+                    <h2>11. Dependencies</h2>
+                    <table>
+                        <tr><th>Package</th><th>Purpose</th></tr>
+                        <tr><td><code>fastapi</code></td><td>ASGI web framework for REST API + WebSocket support</td></tr>
+                        <tr><td><code>uvicorn[standard]</code></td><td>ASGI server with WebSocket support</td></tr>
+                        <tr><td><code>apscheduler</code></td><td>Background job scheduler with cron trigger support</td></tr>
+                        <tr><td><code>websockets</code></td><td>WebSocket protocol implementation (used by Uvicorn)</td></tr>
+                    </table>
+                    <p>Additionally uses Python standard library modules: <code>sqlite3</code>, <code>asyncio</code>, <code>json</code>, <code>os</code>, <code>sys</code>, <code>pathlib</code>, <code>datetime</code>, <code>contextlib</code>.</p>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ===================== FOOTER ===================== -->
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="https://github.com/shayansaha85/cronfrog" target="_blank">GitHub</a>
+            <a href="index.html">Home</a>
+            <a href="https://github.com/shayansaha85/cronfrog/blob/main/LICENSE" target="_blank">MIT License</a>
+        </div>
+        <p>&copy; 2026 <a href="https://github.com/shayansaha85" target="_blank">Shayan Saha</a>. Built with FastAPI, APScheduler &amp; SQLite.</p>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
