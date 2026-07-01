@@ -383,7 +383,14 @@ img {
    SECTIONS
    ============================================= */
 .section {
-    padding: 6rem 2rem;
+    padding: 4.5rem 2rem;
+}
+
+.section-divider {
+    width: min(100%, 900px);
+    height: 1px;
+    margin: -0.5rem auto 0;
+    background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.28), transparent);
 }
 
 .section-alt {
@@ -398,7 +405,7 @@ img {
 .section-header {
     text-align: center;
     max-width: 640px;
-    margin: 0 auto 4rem;
+    margin: 0 auto 3rem;
 }
 
 .section-label {
