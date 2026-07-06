@@ -19,6 +19,7 @@
             </a>
             <div class="navbar-links" id="nav-menu">
                 <a href="#features">Features</a>
+                <a href="#whats-new">What's New</a>
                 <a href="#how-it-works">How It Works</a>
                 <a href="#download">Get Started</a>
                 <a href="docs.html">Docs</a>
@@ -93,6 +94,68 @@
                     <h3>Single-Process Architecture</h3>
                     <p>The HTTP server, background scheduler, and job executor all run in one Python process sharing one asyncio event loop. Deploy with a single command.</p>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== WHAT'S NEW v1.0.1 ===================== -->
+    <section class="section" id="whats-new">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label">What's New</span>
+                <h2>Version 1.0.1 <span class="version-badge">Latest</span></h2>
+                <p>Timezone-aware scheduling, one-off date triggers, and full run history — all in a single release.</p>
+            </div>
+            <div class="release-features">
+
+                <div class="release-item card card-elevated">
+                    <div class="release-text">
+                        <div class="release-icon">📅</div>
+                        <h3>Specific Date & Time Scheduling</h3>
+                        <p>Schedule one-off jobs at an exact date and time — no cron expression needed. Pick your date from a native calendar widget and CronFrog handles the rest using APScheduler's <code>DateTrigger</code>. The input defaults to your current system time for quick setup.</p>
+                        <div class="release-tags">
+                            <span class="release-tag">DateTrigger</span>
+                            <span class="release-tag">Calendar Picker</span>
+                            <span class="release-tag">One-off Jobs</span>
+                        </div>
+                    </div>
+                    <div class="release-image card">
+                        <img src="assets/datetimePicker.png" alt="Date and Time Picker for scheduling one-off jobs">
+                    </div>
+                </div>
+
+                <div class="release-item card card-elevated">
+                    <div class="release-text">
+                        <div class="release-icon">🌍</div>
+                        <h3>Searchable Timezone Selector</h3>
+                        <p>Every job can now run in a specific timezone. A fully searchable dropdown lists all IANA timezones with their UTC offsets (e.g. <code>[+05:30] Asia/Kolkata</code>). Your local timezone is auto-detected and pinned at the top for quick access.</p>
+                        <div class="release-tags">
+                            <span class="release-tag">IANA Timezones</span>
+                            <span class="release-tag">UTC Offsets</span>
+                            <span class="release-tag">Auto-detect Local</span>
+                        </div>
+                    </div>
+                    <div class="release-image card">
+                        <img src="assets/timezonePicker.png" alt="Searchable timezone selector with UTC offsets">
+                    </div>
+                </div>
+
+                <div class="release-item card card-elevated">
+                    <div class="release-text">
+                        <div class="release-icon">📜</div>
+                        <h3>Full Run History</h3>
+                        <p>A dedicated Run History page in the sidebar tracks every job execution — successful or failed. Color-coded status indicators (✔ pass, ✖ fail) make it easy to spot issues. Clear individual runs or wipe the entire history with one click.</p>
+                        <div class="release-tags">
+                            <span class="release-tag">Pass / Fail Tracking</span>
+                            <span class="release-tag">Bulk Clear</span>
+                            <span class="release-tag">Cascade Delete</span>
+                        </div>
+                    </div>
+                    <div class="release-image card">
+                        <img src="assets/jobHistory.png" alt="Run history page showing passed and failed job runs">
+                    </div>
+                </div>
+
             </div>
         </div>
     </section>
